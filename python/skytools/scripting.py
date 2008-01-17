@@ -410,11 +410,9 @@ class DBScript(object):
         if cache in self.db_cache:
             dbc = self.db_cache[cache]
         else:
-            if connstr:
-                loc = connstr
-            else:
-                loc = self.cf.get(dbname)
-            dbc = DBCachedConn(cache, loc, max_age)
+            if not connstr:
+                connstr = self.cf.get(dbname)
+            dbc = DBCachedConn(cache, connstr, max_age)
             self.db_cache[cache] = dbc
 
         return dbc.get_connection(autocommit, isolation_level)
@@ -506,7 +504,7 @@ class DBScript(object):
                        str(tb), repr(traceback.format_tb(tb))))
             del tb
             self.reset()
-            if self.looping:
+            if self.looping and not self.do_single_loop:
                 time.sleep(20)
                 return 1
 
