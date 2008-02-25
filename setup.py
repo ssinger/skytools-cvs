@@ -2,6 +2,7 @@
 
 import sys, os.path, re
 from distutils.core import setup
+from distutils.extension import Extension
 
 # check if configure has run
 if not os.path.isfile('config.mak'):
@@ -18,7 +19,6 @@ share_dup_files = [
    'sql/pgq/pgq.sql',
    'sql/londiste/londiste.sql',
    'sql/pgq_ext/pgq_ext.sql',
-   'sql/pgq_set/pgq_set.sql',
    'sql/logtriga/logtriga.sql',
 ]
 if os.path.isfile('sql/txid/txid.sql'):
@@ -35,7 +35,6 @@ setup(
     package_dir = {'': 'python'},
     packages = ['skytools', 'londiste', 'pgq'],
     scripts = ['python/londiste.py', 'python/pgqadm.py', 'python/walmgr.py',
-               'python/setadm.py',
                'scripts/cube_dispatcher.py', 'scripts/queue_mover.py',
                'scripts/table_dispatcher.py', 'scripts/bulk_loader.py',
                'scripts/scriptmgr.py', 'scripts/queue_splitter.py'],
@@ -53,5 +52,6 @@ setup(
         'scripts/scriptmgr.ini.templ',
         ]),
       ('share/skytools', share_dup_files)],
+    ext_modules=[Extension("skytools._cquoting", ['python/modules/cquoting.c'])],
 )
 
