@@ -3,6 +3,7 @@
 import sys, time
 import skytools.psycopgwrapper
 import skytools._cquoting, skytools._pyquoting
+from decimal import Decimal
 
 # create a DictCursor row
 class fake_cursor:
@@ -32,6 +33,7 @@ sql_literal = [
     [r"a\'b", r"E'a\\''b'"],
     [1, "'1'"],
     [True, "'True'"],
+    [Decimal(1), "'1'"],
 ]
 regtest("quote_literal/c", skytools._cquoting.quote_literal, sql_literal)
 regtest("quote_literal/py", skytools._pyquoting.quote_literal, sql_literal)
@@ -44,6 +46,7 @@ sql_copy = [
     [1, "1"],
     [True, "True"],
     [u"qwe", "qwe"],
+    [Decimal(1), "1"],
 ]
 regtest("quote_copy/c", skytools._cquoting.quote_copy, sql_copy)
 regtest("quote_copy/py", skytools._pyquoting.quote_copy, sql_copy)
@@ -65,6 +68,7 @@ t_urlenc = [
     [{'qwe': 1, u'zz': u"qwe"}, "qwe=1&zz=qwe"],
     [{'a': '\000%&'}, "a=%00%25%26"],
     [dbrow, 'data=value&id=123'],
+    [{'a': Decimal("1")}, "a=1"],
 ]
 regtest("db_urlencode/c", skytools._cquoting.db_urlencode, t_urlenc)
 regtest("db_urlencode/py", skytools._pyquoting.db_urlencode, t_urlenc)
