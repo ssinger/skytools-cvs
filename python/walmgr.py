@@ -1249,13 +1249,16 @@ STOP TIME: %(stop_time)s
                 else:                   
                     # create an archive_status directory
                     xlog_dir = os.path.join(data_dir, "pg_xlog")
-                    # if the archive status directory already exists just empty it.
-                    # but if it does not exist create it.
                     archive_path = os.path.join(xlog_dir,"archive_status")
-                    if os.stat(archive_path):
-                         cmdline = [ "rm", "-r", archive_path ]
-                         self.exec_cmd(cmdline)
-                    os.mkdir(archive_path, 0700)
+                    try:
+                        os.mkdir(archive_path, 0700)
+                    except OSError, ex:
+                         if ex.errno == errno.EEXIST:
+                             pass;
+                         else:
+                             raise ex
+
+                    
         else:
             data_dir = full_dir
 
