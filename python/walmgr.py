@@ -1205,7 +1205,7 @@ STOP TIME: %(stop_time)s
             if not yesno("Is postgres shut down on %s ?" % data_dir):
                 die(1, "Shut it down and try again.")
 
-        if self.wtype == SLAVE:
+        if self.wtype == SLAVE:            
             createbackup = True
         elif os.path.isdir(data_dir):
             createbackup = yesno("Create backup of %s?" % data_dir)
@@ -1213,10 +1213,18 @@ STOP TIME: %(stop_time)s
             # nothing to back up
             createbackup = False
 
-        if not setname and os.path.isdir(data_dir):
+        backup_datadir=True
+
+        if os.path.isdir(data_dir) and self.cf.get('backup_datadir','yes')=='no': 
+            backup_datadir=False
+            self.log.warning('backup_datadir is no, deleting old data dir')
+            shutil.rmtree(data_dir)
+        
+        if not setname and os.path.isdir(data_dir) and backup_datadir:
             # compatibility mode - default restore on slave and data directory exists
-            self.log.warning("Old data directory is in the way, gotta move it.")
             createbackup = True
+            self.log.warning("Old data directory is in the way, gotta move it.")
+            
 
         # move old data away
         if createbackup and os.path.isdir(data_dir):
