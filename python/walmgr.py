@@ -1154,7 +1154,7 @@ STOP TIME: %(stop_time)s
 
         If setname is specified, the contents of that backup set directory are 
         restored instead of "full_backup". Also copy is used instead of rename to 
-        restore the directory.
+        restore the directory (unless a pg_xlog directory has been specified).
 
         Restore to altdst if specified. Complain if it exists.
         """
@@ -1226,19 +1226,36 @@ STOP TIME: %(stop_time)s
 
         # move new data, copy if setname specified
         self.log.info("%s %s to %s" % (setname and "Copy" or "Move", full_dir, data_dir))
+        link_xlog_dir=False
+        exclude_pg_xlog=''
+        if self.cf.get('pg_xlog_path','')!='':          
+            link_xlog_dir=True
+            exclude_pg_xlog='--exclude=pg_xlog'
         if not self.not_really:
-            if not setname:
+            if not setname and not link_xlog_dir:
                 os.rename(full_dir, data_dir)
-            else:
-                self.exec_rsync(["--delete", "--no-relative", "--exclude=pg_xlog/*", os.path.join(full_dir,""), data_dir], True)
-                if self.wtype == MASTER and createbackup and os.path.isdir(bak):
+            else:   
+                rsync_args=["--delete", "--no-relative", "--exclude=pg_xlog/*"]
+                if exclude_pg_xlog != '':
+                    rsync_args.append(exclude_pg_xlog)
+                rsync_args=rsync_args+[os.path.join(full_dir,""), data_dir]
+                self.exec_rsync(rsync_args, True)
+                if link_xlog_dir:
+                   os.symlink(self.cf.get('pg_xlog_path'),"%s/pg_xlog" % data_dir)                
+                if (self.wtype == MASTER and createbackup and os.path.isdir(bak)):
                     # restore original xlog files to data_dir/pg_xlog   
                     # symlinked directories are dereferences
-                    self.exec_cmd(["cp", "-rL", "%s/pg_xlog" % bak, data_dir])
-                else:
+                    self.exec_cmd(["cp", "-rL", "%s/pg_xlog/" % full_dir, "%s/pg_xlog" % data_dir ])
+                else:                   
                     # create an archive_status directory
                     xlog_dir = os.path.join(data_dir, "pg_xlog")
-                    os.mkdir(os.path.join(xlog_dir, "archive_status"), 0700)
+                    # if the archive status directory already exists just empty it.
+                    # but if it does not exist create it.
+                    archive_path = os.path.join(xlog_dir,"archive_status")
+                    if os.stat(archive_path):
+                         cmdline = [ "rm", "-r", archive_path ]
+                         self.exec_cmd(cmdline)
+                    os.mkdir(archive_path, 0700)
         else:
             data_dir = full_dir
 
