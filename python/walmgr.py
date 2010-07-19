@@ -1236,7 +1236,7 @@ STOP TIME: %(stop_time)s
         self.log.info("%s %s to %s" % (setname and "Copy" or "Move", full_dir, data_dir))
         link_xlog_dir=False
         exclude_pg_xlog=''
-        if self.cf.get('pg_xlog_path','')!='':          
+        if self.cf.get('slave_pg_xlog','')!='':          
             link_xlog_dir=True
             exclude_pg_xlog='--exclude=pg_xlog'
         if not self.not_really:
@@ -1249,7 +1249,7 @@ STOP TIME: %(stop_time)s
                 rsync_args=rsync_args+[os.path.join(full_dir,""), data_dir]
                 self.exec_rsync(rsync_args, True)
                 if link_xlog_dir:
-                   os.symlink(self.cf.get('pg_xlog_path'),"%s/pg_xlog" % data_dir)                
+                   os.symlink(self.cf.get('slave_pg_xlog'),"%s/pg_xlog" % data_dir)                
                 if (self.wtype == MASTER and createbackup and os.path.isdir(bak)):
                     # restore original xlog files to data_dir/pg_xlog   
                     # symlinked directories are dereferences
