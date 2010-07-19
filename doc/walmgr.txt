@@ -292,4 +292,4 @@ of the data directory when restoring to the slave.  This defaults to
   partial_wals         = %(slave)s/logs.partial
   full_backup          = %(slave)s/data.master
   keep_backups         = 5
-
+  backup_datadir       = yes
